@@ -1,104 +1,54 @@
 # SpectraGen -- Neural Style Transfer and Generative Art Lab
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.1%2B-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.31%2B-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-00ff88?style=flat-square)](LICENSE)
+A Streamlit lab with two separate kinds of image generation:
 
-A self-contained lab for neural style transfer and procedural generative art, powered by PyTorch's pretrained VGG19. No API keys, no GPU, no cloud dependency.
+- **Neural style transfer:** a Gatys et al. (2016)-style procedure uses frozen pretrained VGG19 features and optimizes an output image's pixels. It does not train a new neural model.
+- **Procedural art:** NumPy/Pillow algorithms generate Mandelbrot or Julia fractals, value-noise flow fields and circular-wave interference patterns. These generators use no neural network.
 
----
+## Run locally
 
-## Features
-
-### Neural Style Transfer
-- Gatys et al. (2016) algorithm using pretrained VGG19
-- Content layer: `conv4_2` / Style layers: `conv1_1` through `conv5_1`
-- Gram-matrix style loss with configurable weights
-- Real-time progress bar during optimisation
-- Side-by-side before/after comparison
-- Runs entirely on CPU -- no CUDA required
-
-### Generative Art Lab
-
-Three procedural art engines, zero neural networks:
-
-| Mode | Description |
-|------|-------------|
-| Fractal Art | Mandelbrot and Julia set fractals with smooth colouring |
-| Flow Field | Perlin-noise-inspired particle flow fields |
-| Wave Interference | Circular wave superposition patterns |
-
-### Visualization
-- RGB colour histogram (Plotly, dark theme)
-- VGG19 feature-map grid viewer
-- Interactive charts with hover tooltips
-
----
-
-## Quick Start
+Use Python 3.10+:
 
 ```bash
 git clone https://github.com/Zinga18018/Neural-Style-Transfer-and-Generative-Art-Lab.git
 cd Neural-Style-Transfer-and-Generative-Art-Lab
-python -m venv venv
-venv\Scripts\activate           # Windows
-source venv/bin/activate        # macOS / Linux
-pip install -r requirements.txt
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The app will open at **http://localhost:8501**.
+On Windows PowerShell, activate with `.\.venv\Scripts\Activate.ps1` instead. Open the local URL printed by Streamlit, normally `http://localhost:8501`.
 
----
+No API key or CUDA GPU is required. Style transfer runs on CPU and loads torchvision's `VGG19_Weights.IMAGENET1K_V1` weights when first used, downloading them if uncached. It is therefore not fully offline on first use. The procedural functions need no model weights, although the combined app imports the Torch-based style-transfer module.
 
-## How It Works
+## Neural style transfer
 
-### Neural Style Transfer
+[src/style_transfer.py](src/style_transfer.py) resizes and normalizes content/style images, extracts VGG19 activations and updates the generated image with Adam. Content uses `conv4_2`; style compares Gram matrices at `conv1_1` through `conv5_1`.
 
-1. Load images -- content and style images are resized and normalised to ImageNet statistics.
-2. Extract features -- a frozen VGG19 extracts activations at content and style layers.
-3. Gram matrices -- style is captured as the correlation between feature channels.
-4. Optimise -- the generated image is iteratively updated via Adam to minimise total loss (content + style).
-5. Output -- the optimised tensor is de-normalised and returned as a PIL Image.
+The UI exposes loss weights and iteration settings, progress updates, before/after images and an RGB histogram. CPU cost depends on image size and iteration count; no timing or quality benchmark is committed. Use images you have permission to process and share.
 
-### Generative Art
+## Procedural art
 
-- **Fractals**: iterative escape-time algorithm with smooth colouring via logarithmic interpolation.
-- **Flow Fields**: value-noise angle field drives particles; additive blending creates luminous trails.
-- **Wave Interference**: superposition of circular waves from random sources produces moire-like patterns.
+[src/generative.py](src/generative.py) implements:
 
----
+| Mode | Method |
+|---|---|
+| Fractals | Escape-time iterations with smooth coloring |
+| Flow fields | Particles following a value-noise angle field |
+| Wave interference | Superposition of circular waves |
 
-## Project Structure
+For repeatable flow/wave output, choose an explicit positive seed and retain the other parameters. In the UI, seed 0 means random rather than a fixed seed. These are algorithmic images, not learned-model samples.
 
-```
-Neural-Style-Transfer-and-Generative-Art-Lab/
-|-- app.py                  # Streamlit entry point
-|-- requirements.txt
-|-- .gitignore
-|-- README.md
-|-- src/
-|   |-- __init__.py
-|   |-- style_transfer.py   # VGG19 neural style transfer engine
-|   |-- generative.py       # Fractal, flow-field, wave art
-|   +-- visualizer.py       # Plotly chart utilities
-```
+## Current interface limits
 
----
+[src/visualizer.py](src/visualizer.py) contains a feature-map-grid utility, but [app.py](app.py) only imports the color-histogram function; the feature-map viewer is not exposed in the interface. The sidebar mode selector also does not switch which tabs are displayed.
 
-## Tech Stack
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Frontend | Streamlit | Interactive web UI |
-| Style Transfer | PyTorch / VGG19 | Feature extraction and optimisation |
-| Image Processing | Pillow | Image I/O and manipulation |
-| Numerical | NumPy | Fractal and noise computation |
-| Charts | Plotly | Dark-themed visualisations |
-
----
+Dependencies use minimum versions without a lockfile, and no automated test suite is committed. Setup, model execution and browser flows were not rerun for this documentation update.
 
 ## License
 
 MIT License -- Yogesh Kuchimanchi
+
+The attribution and license statement above are retained from the existing README. The repository currently has no `LICENSE` file; no license text or new grant is supplied by this documentation.
+
